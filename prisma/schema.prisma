@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Usuario {
+  id                 Int            @id @default(autoincrement())
+  documentoIdentidad String         @unique
+  nombre             String
+  rol                Rol
+  correo             String         @unique
+  telefono           String?
+  contrasena         String
+  asignaturasCreadas Asignatura[]   @relation("DocenteAsignaturas")
+  estudiantes        Estudiante[]
+  recordatorios      Recordatorio[]
+}
+
+model Estudiante {
+  id                 Int        @id @default(autoincrement())
+  documentoIdentidad String     @unique
+  nombre             String
+  carrera            String
+  correo             String     @unique
+  contrasena         String
+  asignaturaId       Int
+  usuarioId          Int
+  xp                 Int        @default(0)
+  streak             Int        @default(0)
+  lastLoginDate      DateTime   @default(now())
+  asignatura         Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+  usuario            Usuario    @relation(fields: [usuarioId], references: [id])
+}
+
+model Asignatura {
+  id              Int            @id @default(autoincrement())
+  nombre          String
+  idDocente       Int
+  activo          Boolean        @default(true)
+  carrera         String
+  enlaceRegistro  String?        @unique
+  fechaExpiracion DateTime?
+  jornada         String
+  docente         Usuario        @relation("DocenteAsignaturas", fields: [idDocente], references: [id])
+  estudiantes     Estudiante[]
+  eventos         Event[]
+  materiales      Material[]
+  recordatorios   Recordatorio[]
+}
+
+model Material {
+  id           Int        @id @default(autoincrement())
+  creadoEn     DateTime   @default(now())
+  idAsignatura Int
+  nombre       String
+  tipo         String
+  url          String     // Ahora será la URL de Supabase
+  asignatura   Asignatura @relation(fields: [idAsignatura], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id           Int        @id @default(autoincrement())
+  title        String
+  date         DateTime
+  description  String
+  published    Boolean    @default(false)
+  asignaturaId Int
+  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+}
+
+model Recordatorio {
+  id           Int        @id @default(autoincrement())
+  titulo       String
+  descripcion  String
+  fecha        DateTime
+  importancia  String
+  asignaturaId Int
+  creadoPorId  Int
+  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+  creadoPor    Usuario    @relation(fields: [creadoPorId], references: [id])
+}
+
+enum Rol {
+  ADMIN
+  DOCENTE
+  ESTUDIANTE
+}
