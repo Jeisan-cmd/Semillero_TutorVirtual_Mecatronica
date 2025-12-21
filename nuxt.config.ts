@@ -37,8 +37,6 @@ export default defineNuxtConfig({
     geminiApiKey: process.env.GEMINI_API_KEY,
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "/api",
-      supabaseUrl: process.env.SUPABASE_URL,
-      supabaseKey: process.env.SUPABASE_KEY,
     },
   },
   app: {
@@ -72,7 +70,7 @@ export default defineNuxtConfig({
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ["vue", "pinia", "supabase"],
+            vendor: ["vue", "pinia"],
             prisma: ["@prisma/client"],
           },
         },

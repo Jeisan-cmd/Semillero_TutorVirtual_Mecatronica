@@ -1,10 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
+import fs from "fs/promises";
+import path from "path";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
-);
 const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
@@ -37,16 +34,16 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Eliminar el archivo de Supabase Storage
-    const { error: supabaseError } = await supabase.storage
-      .from("files")
-      .remove([material.url.split("/").pop()!]); // Extraer el nombre del archivo de la URL
-
-    if (supabaseError) {
-      throw createError({
-        statusCode: 500,
-        message: "Error al eliminar el archivo de Supabase.",
-      });
+    // Eliminar el archivo local
+    if (material.url.startsWith("/uploads/")) {
+      const filename = material.url.split("/").pop();
+      const filePath = path.join(process.cwd(), "public", "uploads", filename!);
+      try {
+        await fs.unlink(filePath);
+      } catch (fileErr) {
+        console.warn("Error al eliminar el archivo local:", fileErr);
+        // No throw error, continue to delete from DB
+      }
     }
 
     // Eliminar el material de la base de datos

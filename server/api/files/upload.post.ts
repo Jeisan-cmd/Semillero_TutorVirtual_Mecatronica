@@ -1,12 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
 import formidable from "formidable";
 import fs from "fs/promises";
+import path from "path";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_KEY!
-);
 const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
@@ -54,28 +50,13 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Subir archivo a Supabase
+    // Subir archivo localmente
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
     const fileData = await fs.readFile(file.filepath);
-    const { data: supabaseData, error: supabaseError } = await supabase.storage
-      .from("files")
-      .upload(file.originalFilename!, fileData, {
-        contentType: file.mimetype!,
-        upsert: true,
-      });
-
-    if (supabaseError) {
-      throw createError({
-        statusCode: 500,
-        message: "Error al subir el archivo a Supabase.",
-      });
-    }
-
-    // Obtener URL pública del archivo
-    const { data: publicUrlData } = supabase.storage
-      .from("files")
-      .getPublicUrl(supabaseData.path);
-    const publicUrl = publicUrlData.publicUrl;
+    const uniqueFilename = `${Date.now()}-${file.originalFilename}`;
+    const uploadPath = path.join(process.cwd(), 'public', 'uploads', uniqueFilename);
+    await fs.writeFile(uploadPath, fileData);
+    const publicUrl = `/uploads/${uniqueFilename}`;
 
     // Guardar en la tabla Material
     await prisma.material.create({
