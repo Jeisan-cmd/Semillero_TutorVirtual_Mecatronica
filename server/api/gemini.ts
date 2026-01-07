@@ -6,6 +6,10 @@ import NodeCache from "node-cache"
 // Crear una instancia de caché con un tiempo de vida de 30 minutos
 const cache = new NodeCache({ stdTTL: 1800 });
 
+// Contador de llamadas a Gemini para limitar uso
+let geminiCallCount = 0;
+const MAX_GEMINI_CALLS = 3;
+
 // Configuración de reintentos
 const RETRY_CONFIG = {
   maxRetries: 3,
@@ -59,12 +63,10 @@ async function makeRequestWithRetry(genAI: any, model: string, prompt: string, c
   }
 }
 
-// Definir modelos en orden de preferencia
+// Definir modelos en orden de preferencia (únicos modelos disponibles con plan gratuito)
 const MODELS = [
-  "gemini-1.5-flash",      // Modelo que sabemos que funciona
-  "gemini-1.5-pro",        // Backup
-  "gemini-2.0-flash-lite", // Alternativas más nuevas
-  "gemini-2.0-flash"
+  "gemini-2.0-flash-lite", // Modelo rápido y económico (plan gratuito)
+  "gemini-2.0-flash"       // Modelo más capaz (plan gratuito)
 ];
 
 export default defineEventHandler(async (event) => {
@@ -88,6 +90,14 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         message: "El prompt es requerido y debe ser una cadena de texto no vacía",
+      });
+    }
+    
+    // Verificar límite de llamadas a Gemini
+    if (geminiCallCount >= MAX_GEMINI_CALLS) {
+      throw createError({
+        statusCode: 429,
+        message: `Límite de ${MAX_GEMINI_CALLS} llamadas a Gemini alcanzado. La cuota gratuita se resetea mensualmente (generalmente el día 1). Para uso ilimitado, actualiza a un plan pago en Google AI Studio.`,
       });
     }
     
@@ -119,6 +129,7 @@ export default defineEventHandler(async (event) => {
         
         // Si llegamos aquí, la petición fue exitosa
         cache.set(cacheKey, response);
+        geminiCallCount++;
         return response;
       } catch (error: any) {
         console.error(`Error con modelo ${model}:`, error);
