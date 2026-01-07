@@ -1,12 +1,12 @@
 import { defineEventHandler, createError } from "h3"
 
 export default defineEventHandler(async (event) => {
-  const newsApiKey = process.env.VITE_NEWS_API_KEY
+  const newsApiKey = process.env.NEWS_API_KEY
   if (!newsApiKey) {
-    console.error("VITE_NEWS_API_KEY no está definida")
+    console.error("NEWS_API_KEY no está definida")
     throw createError({
       statusCode: 500,
-      message: "Error de configuración del servidor: VITE_NEWS_API_KEY no está definida",
+      message: "Error de configuración del servidor: NEWS_API_KEY no está definida",
     })
   }
 
