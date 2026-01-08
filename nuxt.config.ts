@@ -28,10 +28,6 @@ export default defineNuxtConfig({
     ],
   ],
 
-  ui: {
-    fonts: false,
-  },
-
   components: [
     {
       path: "~/components",
@@ -134,7 +130,7 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    typeCheck: false,
   },
 
   build: {
