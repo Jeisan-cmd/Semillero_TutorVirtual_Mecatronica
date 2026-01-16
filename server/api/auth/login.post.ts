@@ -1,5 +1,5 @@
 // server/api/auth/login.post.ts
-import { PrismaClient } from "@prisma/client";
+/*import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { defineEventHandler, readBody, createError } from "h3";
@@ -85,4 +85,62 @@ export default defineEventHandler(async (event) => {
       message: "Internal server error",
     });
   }
-});
+});*/
+
+
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcrypt'
+import { signToken } from '../../utils/jwt'
+import { H3Event } from 'h3'
+
+const prisma = new PrismaClient()
+
+export default defineEventHandler(async (event: H3Event) => {
+  const body = await readBody<{
+    email: string
+    password: string
+  }>(event)
+
+  const { email, password } = body
+
+  if (!email || !password) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Email and password are required'
+    })
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email }
+  })
+
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Invalid credentials'
+    })
+  }
+
+  const isValid = await bcrypt.compare(password, user.password)
+
+  if (!isValid) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Invalid credentials'
+    })
+  }
+
+  const token = signToken({
+    id: user.id,
+    role: user.role
+  })
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    }
+  }
+})

@@ -1,3 +1,5 @@
+
+/*
 generator client {
   provider = "prisma-client-js"
 }
@@ -89,5 +91,68 @@ enum Rol {
   ADMIN
   DOCENTE
   ESTUDIANTE
+}
+*/
+
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  role        Role      @default(STUDENT)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relación con progreso
+  progresses  Progress[]
+  chatSessions ChatSession[]
+}
+
+
+model Module {
+  id          String    @id @default(uuid())
+  title       String
+  content     String    // Puede ser Markdown, HTML o JSON según lo que tu frontend maneje
+  order       Int       // Para ordenar módulos
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  progresses  Progress[]
+}
+
+model Progress {
+  id         String    @id @default(uuid())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  module     Module    @relation(fields: [moduleId], references: [id])
+  moduleId   String
+  completed  Boolean   @default(false)
+  score      Int?
+  updatedAt  DateTime  @updatedAt
+}
+
+model ChatSession {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  messages  Json      // Guarda la conversación: {role:"user"/"assistant", text:"..."}
+  createdAt DateTime  @default(now())
+}
+  
+enum Role {
+  SUPERADMIN
+  ADMIN
+  STUDENT
 }
 
