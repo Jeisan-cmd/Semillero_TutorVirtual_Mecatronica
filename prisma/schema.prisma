@@ -1,158 +1,208 @@
-
-/*
 generator client {
   provider = "prisma-client-js"
 }
-
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-
-model Usuario {
-  id                 Int            @id @default(autoincrement())
-  documentoIdentidad String         @unique
-  nombre             String
-  rol                Rol
-  correo             String         @unique
-  telefono           String?
-  contrasena         String
-  asignaturasCreadas Asignatura[]   @relation("DocenteAsignaturas")
-  estudiantes        Estudiante[]
-  recordatorios      Recordatorio[]
-}
-
-model Estudiante {
-  id                 Int        @id @default(autoincrement())
-  documentoIdentidad String     @unique
-  nombre             String
-  carrera            String
-  correo             String     @unique
-  contrasena         String
-  asignaturaId       Int
-  usuarioId          Int
-  xp                 Int        @default(0)
-  streak             Int        @default(0)
-  lastLoginDate      DateTime   @default(now())
-  asignatura         Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-  usuario            Usuario    @relation(fields: [usuarioId], references: [id])
-}
-
-model Asignatura {
-  id              Int            @id @default(autoincrement())
-  nombre          String
-  idDocente       Int
-  activo          Boolean        @default(true)
-  carrera         String
-  enlaceRegistro  String?        @unique
-  fechaExpiracion DateTime?
-  jornada         String
-  docente         Usuario        @relation("DocenteAsignaturas", fields: [idDocente], references: [id])
-  estudiantes     Estudiante[]
-  eventos         Event[]
-  materiales      Material[]
-  recordatorios   Recordatorio[]
-}
-
-model Material {
-  id           Int        @id @default(autoincrement())
-  creadoEn     DateTime   @default(now())
-  idAsignatura Int
-  nombre       String
-  tipo         String
-  url          String     // Ahora será la URL de Supabase
-  asignatura   Asignatura @relation(fields: [idAsignatura], references: [id], onDelete: Cascade)
-}
-
-model Event {
-  id           Int        @id @default(autoincrement())
-  title        String
-  date         DateTime
-  description  String
-  published    Boolean    @default(false)
-  asignaturaId Int
-  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-}
-
-model Recordatorio {
-  id           Int        @id @default(autoincrement())
-  titulo       String
-  descripcion  String
-  fecha        DateTime
-  importancia  String
-  asignaturaId Int
-  creadoPorId  Int
-  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-  creadoPor    Usuario    @relation(fields: [creadoPorId], references: [id])
-}
-
-enum Rol {
-  ADMIN
-  DOCENTE
-  ESTUDIANTE
-}
-*/
-
-// prisma/schema.prisma
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
+/**
+ * ===========================
+ * ENUMS
+ * ===========================
+ */
 
-model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  password    String
-  role        Role      @default(STUDENT)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relación con progreso
-  progresses  Progress[]
-  chatSessions ChatSession[]
-}
-
-
-model Module {
-  id          String    @id @default(uuid())
-  title       String
-  content     String    // Puede ser Markdown, HTML o JSON según lo que tu frontend maneje
-  order       Int       // Para ordenar módulos
-  createdBy   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  progresses  Progress[]
-}
-
-model Progress {
-  id         String    @id @default(uuid())
-  user       User      @relation(fields: [userId], references: [id])
-  userId     String
-  module     Module    @relation(fields: [moduleId], references: [id])
-  moduleId   String
-  completed  Boolean   @default(false)
-  score      Int?
-  updatedAt  DateTime  @updatedAt
-}
-
-model ChatSession {
-  id        String    @id @default(uuid())
-  user      User      @relation(fields: [userId], references: [id])
-  userId    String
-  messages  Json      // Guarda la conversación: {role:"user"/"assistant", text:"..."}
-  createdAt DateTime  @default(now())
-}
-  
-enum Role {
+enum Rol {
   SUPERADMIN
   ADMIN
-  STUDENT
+  DOCENTE
+  ESTUDIANTE
 }
 
+/**
+ * ===========================
+ * USUARIOS
+ * ===========================
+ */
+
+model Usuario {
+  id                 Int    @id @default(autoincrement())
+  documentoIdentidad String @unique
+  nombre             String
+  correo             String @unique
+  contrasena         String
+  rol                Rol
+
+  telefono      String?
+  xp            Int      @default(0)
+  streak        Int      @default(0)
+  lastLoginDate DateTime @default(now())
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  asignaturasCreadas Asignatura[]   @relation("DocenteAsignaturas")
+  estudiantes        Estudiante[]
+  recordatorios      Recordatorio[]
+
+  // 🔽 ESTE CAMPO FALTABA
+  modulosCreados Modulo[]
+
+  progresos    Progreso[]
+  sesionesChat ChatSession[]
+}
+
+/**
+ * ===========================
+ * ESTUDIANTE
+ * ===========================
+ */
+
+model Estudiante {
+  id                 Int    @id @default(autoincrement())
+  documentoIdentidad String @unique
+  nombre             String
+  carrera            String
+  correo             String @unique
+  contrasena         String
+
+  usuarioId    Int
+  asignaturaId Int
+
+  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+  usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+/**
+ * ===========================
+ * ASIGNATURA
+ * ===========================
+ */
+
+model Asignatura {
+  id      Int     @id @default(autoincrement())
+  nombre  String
+  carrera String
+  jornada String
+  activo  Boolean @default(true)
+
+  idDocente Int
+  docente   Usuario @relation("DocenteAsignaturas", fields: [idDocente], references: [id])
+
+  enlaceRegistro  String?   @unique
+  fechaExpiracion DateTime?
+
+  estudiantes   Estudiante[]
+  materiales    Material[]
+  eventos       Evento[]
+  recordatorios Recordatorio[]
+}
+
+/**
+ * ===========================
+ * MATERIAL
+ * ===========================
+ */
+
+model Material {
+  id       Int      @id @default(autoincrement())
+  nombre   String
+  tipo     String
+  url      String
+  creadoEn DateTime @default(now())
+
+  asignaturaId Int
+  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+}
+
+/**
+ * ===========================
+ * EVENTO
+ * ===========================
+ */
+
+model Evento {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  fecha       DateTime
+  publicado   Boolean  @default(false)
+
+  asignaturaId Int
+  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+}
+
+/**
+ * ===========================
+ * RECORDATORIO
+ * ===========================
+ */
+
+model Recordatorio {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  fecha       DateTime
+  importancia String
+
+  asignaturaId Int
+  creadoPorId  Int
+
+  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+  creadoPor  Usuario    @relation(fields: [creadoPorId], references: [id], onDelete: Cascade)
+}
+
+/**
+ * ===========================
+ * MODULO DE APRENDIZAJE
+ * ===========================
+ */
+
+model Modulo {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  contenido String
+  orden     Int
+  creadoEn  DateTime @default(now())
+
+  creadoPor Int
+  autor     Usuario @relation(fields: [creadoPor], references: [id])
+
+  progresos Progreso[]
+}
+
+/**
+ * ===========================
+ * PROGRESO DEL ESTUDIANTE
+ * ===========================
+ */
+
+model Progreso {
+  id        Int @id @default(autoincrement())
+  usuarioId Int
+  moduloId  Int
+
+  completado    Boolean  @default(false)
+  puntaje       Int?
+  actualizadoEn DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  modulo  Modulo  @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, moduloId])
+}
+
+/**
+ * ===========================
+ * CHATBOT
+ * ===========================
+ */
+
+model ChatSession {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  mensajes  Json
+  creadoEn  DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
