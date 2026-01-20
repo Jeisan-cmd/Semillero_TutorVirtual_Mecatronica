@@ -19,7 +19,6 @@ export const verifyToken = (token: string): Promise<DecodedToken> => {
     })
   })
 }*/
-
 import jwt from 'jsonwebtoken'
 import { Rol } from '@prisma/client'
 
@@ -28,16 +27,21 @@ export interface AuthTokenPayload {
   rol: Rol
 }
 
-const JWT_SECRET = process.env.JWT_SECRET!
-
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined')
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error('JWT_SECRET no está definido')
+  }
+  return secret
 }
 
 export function signToken(payload: AuthTokenPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(payload, getJwtSecret(), {
+    expiresIn: '7d'
+  })
 }
 
 export function verifyToken(token: string): AuthTokenPayload {
-  return jwt.verify(token, JWT_SECRET) as AuthTokenPayload
+  return jwt.verify(token, getJwtSecret()) as AuthTokenPayload
 }
+

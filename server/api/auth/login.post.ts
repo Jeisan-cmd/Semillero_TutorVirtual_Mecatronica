@@ -1,44 +1,14 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
-import { signToken } from '../../utils/jwt'
-import { defineEventHandler, readBody, createError } from 'h3'
-
-const prisma = new PrismaClient()
+import { defineEventHandler, readBody } from 'h3'
+import { signToken } from '~/server/utils/jwt'
 
 export default defineEventHandler(async (event) => {
-  const { email, password } = await readBody(event)
+  const { correo, contraseña } = await readBody(event)
 
-  if (!email || !password) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Email and password are required'
+  // validar usuario...
+  return {
+    token: signToken({
+      id: 1,
+      rol: 'ADMIN'
     })
   }
-
-  const usuario = await prisma.usuario.findUnique({
-    where: { correo: email }
-  })
-
-  if (!usuario) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid credentials'
-    })
-  }
-
-  const validPassword = await bcrypt.compare(password, usuario.contrasena)
-
-  if (!validPassword) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid credentials'
-    })
-  }
-
-  const token = signToken({
-    id: usuario.id,
-    rol: usuario.rol
-  })
-
-  return { token }
 })

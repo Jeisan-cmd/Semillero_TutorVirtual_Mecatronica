@@ -35,42 +35,37 @@ model Usuario {
   rol                Rol
 
   telefono      String?
-  xp            Int      @default(0)
-  streak        Int      @default(0)
-  lastLoginDate DateTime @default(now())
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  xp            Int       @default(0)
+  streak        Int       @default(0)
+  lastLoginDate DateTime?
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
 
+  // Relaciones
   asignaturasCreadas Asignatura[]   @relation("DocenteAsignaturas")
-  estudiantes        Estudiante[]
+  inscripciones      Inscripcion[]
   recordatorios      Recordatorio[]
-
-  // 🔽 ESTE CAMPO FALTABA
-  modulosCreados Modulo[]
-
-  progresos    Progreso[]
-  sesionesChat ChatSession[]
+  modulosCreados     Modulo[]
+  progresos          Progreso[]
+  sesionesChat       ChatSession[]
 }
 
 /**
  * ===========================
- * ESTUDIANTE
+ * INSCRIPCIÓN (ESTUDIANTE ↔ ASIGNATURA)
  * ===========================
  */
 
-model Estudiante {
-  id                 Int    @id @default(autoincrement())
-  documentoIdentidad String @unique
-  nombre             String
-  carrera            String
-  correo             String @unique
-  contrasena         String
-
+model Inscripcion {
+  id           Int      @id @default(autoincrement())
   usuarioId    Int
   asignaturaId Int
+  creadoEn     DateTime @default(now())
 
-  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
   usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, asignaturaId])
 }
 
 /**
@@ -92,10 +87,12 @@ model Asignatura {
   enlaceRegistro  String?   @unique
   fechaExpiracion DateTime?
 
-  estudiantes   Estudiante[]
+  // Relaciones
+  inscripciones Inscripcion[]
   materiales    Material[]
   eventos       Evento[]
   recordatorios Recordatorio[]
+  modulos       Modulo[]
 }
 
 /**
@@ -165,8 +162,11 @@ model Modulo {
   orden     Int
   creadoEn  DateTime @default(now())
 
-  creadoPor Int
-  autor     Usuario @relation(fields: [creadoPor], references: [id])
+  asignaturaId Int
+  creadoPor    Int
+
+  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
+  autor      Usuario    @relation(fields: [creadoPor], references: [id])
 
   progresos Progreso[]
 }
