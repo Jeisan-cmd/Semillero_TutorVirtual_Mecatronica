@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from '~/server/utils/prisma'
 import { defineEventHandler, readBody, createError } from 'h3'
+import { Prisma } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -37,9 +38,21 @@ export default defineEventHandler(async (event) => {
 
     return { id: user.id }
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002') {
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'Correo o documento ya registrado'
+        })
+      }
+    }
+
     throw createError({
-      statusCode: 409,
-      statusMessage: 'El usuario ya existe'
+      statusCode: 500,
+      statusMessage: 'Error interno del servidor'
     })
   }
 })
+
+
+

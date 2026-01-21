@@ -20,7 +20,7 @@ export const verifyToken = (token: string): Promise<DecodedToken> => {
   })
 }*/
 import jwt from 'jsonwebtoken'
-import { Rol } from '@prisma/client'
+import { Rol} from '@prisma/client'
 
 export interface AuthTokenPayload {
   id: number
