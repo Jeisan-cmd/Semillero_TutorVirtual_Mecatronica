@@ -47,6 +47,7 @@
               v-model="role">
               <option value="ADMIN">Administrador</option>
               <option value="DOCENTE">Docente</option>
+              <option value="ESTUDIANTE">Estudiante</option>
             </select>
           </div>
 

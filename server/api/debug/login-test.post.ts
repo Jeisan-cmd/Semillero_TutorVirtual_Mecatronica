@@ -1,4 +1,3 @@
-// server/api/auth/login.post.ts
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody } from "h3";
 import bcrypt from "bcryptjs";
@@ -11,7 +10,7 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     const { email, password } = body;
 
-    console.log("=== LOGIN PARA:", email, "===");
+    console.log("=== LOGIN TEST PARA:", email, "===");
 
     // Check in Usuario table
     console.log("Buscando en tabla Usuario...");
@@ -37,15 +36,14 @@ export default defineEventHandler(async (event) => {
           { expiresIn: "1h" }
         );
         return {
-          token,
+          success: true,
+          type: "usuario",
+          user: usuario.nombre,
           role: usuario.rol,
-          userId: usuario.id
+          token: token.substring(0, 20) + "..."
         };
       } else {
-        return createError({
-          statusCode: 401,
-          message: "Invalid credentials",
-        });
+        return { success: false, message: "Contraseña inválida para usuario" };
       }
     }
 
@@ -73,28 +71,26 @@ export default defineEventHandler(async (event) => {
           { expiresIn: "1h" }
         );
         return {
-          token,
+          success: true,
+          type: "estudiante",
+          user: estudiante.nombre,
           role: "ESTUDIANTE",
           asignaturaId: estudiante.asignaturaId,
-          userId: estudiante.id
+          token: token.substring(0, 20) + "..."
         };
       } else {
-        return createError({
-          statusCode: 401,
-          message: "Invalid credentials",
-        });
+        return { success: false, message: "Contraseña inválida para estudiante" };
       }
     }
 
-    return createError({
-      statusCode: 401,
-      message: "Invalid credentials",
-    });
+    return { success: false, message: "Usuario no encontrado" };
+
   } catch (error) {
-    console.error("Login error:", error);
-    return createError({
-      statusCode: 500,
-      message: "Internal server error",
-    });
+    console.error("Error en login test:", error);
+    return {
+      success: false,
+      message: "Error interno del servidor",
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 });

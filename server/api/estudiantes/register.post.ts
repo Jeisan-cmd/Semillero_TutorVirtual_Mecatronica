@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
         correo: correo,
         contrasena: hashedPassword,
         asignaturaId: asignatura.id, // Asignación automática de la asignatura
-        usuarioId: 1, // Este valor debe corresponder al ID de un usuario previamente creado
+        usuarioId: asignatura.idDocente, // Usar el ID del docente que creó la asignatura
       },
     });
 

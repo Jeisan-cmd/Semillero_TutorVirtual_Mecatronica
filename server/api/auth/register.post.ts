@@ -33,11 +33,11 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Rechazar intentos de registro con rol "ESTUDIANTE"
+  // Rechazar intentos de registro con rol "ESTUDIANTE" - deben usar la página de inscripción
   if (role === "ESTUDIANTE") {
     return createError({
       statusCode: 400,
-      message: "No se permite el registro directo de estudiantes.",
+      message: "Los estudiantes deben registrarse usando un enlace de invitación de su docente. Ve a la página de inicio y solicita acceso a tu docente.",
     });
   }
 
