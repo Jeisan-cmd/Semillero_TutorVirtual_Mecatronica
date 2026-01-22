@@ -22,29 +22,25 @@ enum Rol {
 
 /**
  * ===========================
- * USUARIOS
+ * USUARIO
  * ===========================
+ * Identidad + rol + progreso + chat
  */
-
 model Usuario {
-  id                 Int    @id @default(autoincrement())
-  documentoIdentidad String @unique
+  id                 Int      @id @default(autoincrement())
+  documentoIdentidad String   @unique
   nombre             String
-  correo             String @unique
+  correo             String   @unique
   contrasena         String
   rol                Rol
 
-  telefono      String?
-  xp            Int       @default(0)
-  streak        Int       @default(0)
-  lastLoginDate DateTime?
-  creadoEn      DateTime  @default(now())
-  actualizadoEn DateTime  @updatedAt
+  activo             Boolean  @default(true)
+  lastLoginDate      DateTime?
+  creadoEn           DateTime @default(now())
+  actualizadoEn      DateTime @updatedAt
 
   // Relaciones
-  asignaturasCreadas Asignatura[]   @relation("DocenteAsignaturas")
-  inscripciones      Inscripcion[]
-  recordatorios      Recordatorio[]
+  materialesCreados  Material[]
   modulosCreados     Modulo[]
   progresos          Progreso[]
   sesionesChat       ChatSession[]
@@ -52,109 +48,31 @@ model Usuario {
 
 /**
  * ===========================
- * INSCRIPCIÓN (ESTUDIANTE ↔ ASIGNATURA)
+ * MATERIAL TÉCNICO (PDF / DOC)
  * ===========================
+ * Fuente única de verdad
  */
+model Material {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String?
+  tipo        String
+  url         String
+  creadoEn    DateTime @default(now())
 
-model Inscripcion {
-  id           Int      @id @default(autoincrement())
-  usuarioId    Int
-  asignaturaId Int
-  creadoEn     DateTime @default(now())
-
-  usuario    Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-
-  @@unique([usuarioId, asignaturaId])
-}
-
-/**
- * ===========================
- * ASIGNATURA
- * ===========================
- */
-
-model Asignatura {
-  id      Int     @id @default(autoincrement())
-  nombre  String
-  carrera String
-  jornada String
-  activo  Boolean @default(true)
-
-  idDocente Int
-  docente   Usuario @relation("DocenteAsignaturas", fields: [idDocente], references: [id])
-
-  enlaceRegistro  String?   @unique
-  fechaExpiracion DateTime?
+  creadoPorId Int
+  creadoPor   Usuario @relation(fields: [creadoPorId], references: [id], onDelete: Cascade)
 
   // Relaciones
-  inscripciones Inscripcion[]
-  materiales    Material[]
-  eventos       Evento[]
-  recordatorios Recordatorio[]
-  modulos       Modulo[]
+  modulos     ModuloMaterial[]
 }
 
 /**
  * ===========================
- * MATERIAL
+ * MÓDULO DE APRENDIZAJE
  * ===========================
+ * Guía pedagógica del material
  */
-
-model Material {
-  id       Int      @id @default(autoincrement())
-  nombre   String
-  tipo     String
-  url      String
-  creadoEn DateTime @default(now())
-
-  asignaturaId Int
-  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-}
-
-/**
- * ===========================
- * EVENTO
- * ===========================
- */
-
-model Evento {
-  id          Int      @id @default(autoincrement())
-  titulo      String
-  descripcion String
-  fecha       DateTime
-  publicado   Boolean  @default(false)
-
-  asignaturaId Int
-  asignatura   Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-}
-
-/**
- * ===========================
- * RECORDATORIO
- * ===========================
- */
-
-model Recordatorio {
-  id          Int      @id @default(autoincrement())
-  titulo      String
-  descripcion String
-  fecha       DateTime
-  importancia String
-
-  asignaturaId Int
-  creadoPorId  Int
-
-  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-  creadoPor  Usuario    @relation(fields: [creadoPorId], references: [id], onDelete: Cascade)
-}
-
-/**
- * ===========================
- * MODULO DE APRENDIZAJE
- * ===========================
- */
-
 model Modulo {
   id        Int      @id @default(autoincrement())
   titulo    String
@@ -162,28 +80,45 @@ model Modulo {
   orden     Int
   creadoEn  DateTime @default(now())
 
-  asignaturaId Int
-  creadoPor    Int
+  creadoPorId Int
+  creadoPor   Usuario @relation(fields: [creadoPorId], references: [id])
 
-  asignatura Asignatura @relation(fields: [asignaturaId], references: [id], onDelete: Cascade)
-  autor      Usuario    @relation(fields: [creadoPor], references: [id])
+  // Relaciones
+  materiales ModuloMaterial[]
+  progresos  Progreso[]
+  chats      ChatSession[]
+}
 
-  progresos Progreso[]
+/**
+ * ===========================
+ * RELACIÓN MÓDULO ↔ MATERIAL
+ * ===========================
+ * N:M — un material puede usarse en varios módulos
+ */
+model ModuloMaterial {
+  id         Int @id @default(autoincrement())
+  moduloId   Int
+  materialId Int
+
+  modulo   Modulo   @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+  material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([moduloId, materialId])
 }
 
 /**
  * ===========================
  * PROGRESO DEL ESTUDIANTE
  * ===========================
+ * Controla avance por módulo
  */
-
 model Progreso {
   id        Int @id @default(autoincrement())
   usuarioId Int
   moduloId  Int
 
-  completado    Boolean  @default(false)
-  puntaje       Int?
+  completado Boolean  @default(false)
+  puntaje    Int?
   actualizadoEn DateTime @updatedAt
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -194,15 +129,17 @@ model Progreso {
 
 /**
  * ===========================
- * CHATBOT
+ * CHAT DEL TUTOR VIRTUAL
  * ===========================
+ * Contextualizado por módulo
  */
-
 model ChatSession {
   id        Int      @id @default(autoincrement())
   usuarioId Int
+  moduloId  Int
   mensajes  Json
   creadoEn  DateTime @default(now())
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  modulo  Modulo  @relation(fields: [moduloId], references: [id], onDelete: Cascade)
 }

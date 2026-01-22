@@ -32,13 +32,14 @@ export default defineEventHandler(async (event) => {
     }
 
     // Crear al nuevo estudiante
-    const nuevoEstudiante = await prisma.estudiante.create({
+    const nuevoEstudiante = await prisma.usuario.create({
       data: {
         documentoIdentidad: documentoIdentidad,
         nombre: nombre,
         carrera: carrera,
         correo: correo,
         contrasena: hashedPassword,
+        rol: "ESTUDIANTE",
         asignaturaId: asignatura.id, // Asignación automática de la asignatura
         usuarioId: 1, // Este valor debe corresponder al ID de un usuario previamente creado
       },
