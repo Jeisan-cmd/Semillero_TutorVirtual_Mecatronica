@@ -1,58 +1,68 @@
-import bcrypt from 'bcryptjs'
-import { prisma } from '~/server/utils/prisma'
-import { defineEventHandler, readBody, createError } from 'h3'
-import { Prisma } from '@prisma/client'
+import { PrismaClient, Rol } from "@prisma/client"
+import { readBody, createError } from "h3"
+import bcrypt from "bcrypt"
+
+const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-
-  const {
-    correo,
-    contrasena,
-    rol,
-    documentoIdentidad,
-    nombre,
-    telefono
-  } = body
-
-  if (!correo || !contrasena || !rol || !documentoIdentidad || !nombre) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'Datos incompletos'
-    })
-  }
-
-  const hashedPassword = await bcrypt.hash(contrasena, 10)
-
   try {
-    const user = await prisma.usuario.create({
+    const body = await readBody(event)
+
+    const {
+      documentoIdentidad,
+      nombre,
+      correo,
+      contrasena,
+      rol,
+    } = body
+
+    // 🔒 Validaciones mínimas
+    if (!documentoIdentidad || !nombre || !correo || !contrasena) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "Datos incompletos",
+      })
+    }
+
+    // 🔁 Verificar correo único
+    const existe = await prisma.usuario.findUnique({
+      where: { correo },
+    })
+
+    if (existe) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "El usuario ya existe",
+      })
+    }
+
+    const hash = await bcrypt.hash(contrasena, 10)
+
+    const usuario = await prisma.usuario.create({
       data: {
-        correo,
-        contrasena: hashedPassword,
-        rol,
         documentoIdentidad,
         nombre,
-        telefono
-      }
+        correo,
+        contrasena: hash,
+        rol: rol ?? Rol.ESTUDIANTE, // 👈 DEFAULT SEGURO
+      },
     })
 
-    return { id: user.id }
-  } catch (err) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === 'P2002') {
-        throw createError({
-          statusCode: 409,
-          statusMessage: 'Correo o documento ya registrado'
-        })
-      }
+    return {
+      ok: true,
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        correo: usuario.correo,
+        rol: usuario.rol,
+      },
     }
+  } catch (error) {
+    console.error("❌ ERROR REGISTER:", error)
 
     throw createError({
       statusCode: 500,
-      statusMessage: 'Error interno del servidor'
+      statusMessage: "Error al registrar",
     })
   }
 })
-
-
-

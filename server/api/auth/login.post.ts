@@ -1,14 +1,15 @@
-import { defineEventHandler, readBody } from 'h3'
-import { signToken } from '~/server/utils/jwt'
+import { loginUser } from '~/server/services/auth/auth.service'
+import { createError } from 'h3'
 
 export default defineEventHandler(async (event) => {
-  const { correo, contraseña } = await readBody(event)
+  const body = await readBody(event)
 
-  // validar usuario...
-  return {
-    token: signToken({
-      id: 1,
-      rol: 'ADMIN'
+  if (!body?.correo || !body?.contrasena) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Datos incompletos'
     })
   }
+
+  return await loginUser(body.correo, body.contrasena)
 })

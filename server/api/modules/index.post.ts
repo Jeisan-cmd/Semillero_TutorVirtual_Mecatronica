@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody, createError } from 'h3'
 import { prisma } from '~/server/utils/prisma'
 import { requireAuth } from '~/server/utils/auth'
-import { requireRole } from '~/server/utils/requireRole'
+import  requireRole  from '~/server/guards/requireRole'
 import { Rol } from '@prisma/client'
 
 export default defineEventHandler(async (event) => {
@@ -32,14 +32,13 @@ export default defineEventHandler(async (event) => {
 
   // 💾 Crear módulo
   const modulo = await prisma.modulo.create({
-    data: {
-      titulo,
-      contenido,
-      orden,
-      asignaturaId,
-      creadoPor: user.id
-    }
-  })
+  data: {
+    titulo,
+    contenido,
+    orden,
+    creadoPorId: user.id
+  }
+})
 
   return modulo
 })

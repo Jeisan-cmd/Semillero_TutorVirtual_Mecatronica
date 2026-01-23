@@ -25,8 +25,7 @@ async function main() {
       nombre: 'Super Admin',
       correo: correoAdmin,
       contrasena: hash,
-      rol: Rol.SUPERADMIN,
-      telefono: '3000000000',
+      rol: Rol.SUPERADMIN
     },
   })
 

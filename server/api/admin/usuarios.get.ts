@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { requireRole } from '~/server/utils/requireRole'
+import requireRole  from '~/server/guards/requireRole'
 import { Rol } from '@prisma/client'
 import { prisma } from '~/server/utils/prisma'
 
