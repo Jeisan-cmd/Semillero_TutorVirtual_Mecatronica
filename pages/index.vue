@@ -1,3 +1,3 @@
 <template>
-  <NuxtLink to="/login">Login</NuxtLink>
+    <NuxtLink to="/login">Login</NuxtLink>
 </template>
