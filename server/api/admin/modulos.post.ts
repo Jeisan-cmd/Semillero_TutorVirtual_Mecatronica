@@ -24,6 +24,8 @@ export default defineEventHandler(async (event) => {
     creadoPorId: user.id
   })
 
+
+
   return {
     ok: true,
     modulo
