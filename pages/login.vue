@@ -138,7 +138,7 @@ const resetPassword = () => {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background: url('/images/robot-bg.png') center/cover no-repeat;
+  background: url('/images/g11.jpg') center/cover no-repeat;
   display: flex;
   justify-content: flex-end;
   align-items: center;
