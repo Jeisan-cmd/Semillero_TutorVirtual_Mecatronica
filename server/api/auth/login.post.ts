@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // server/api/auth/login.post.ts
 import { PrismaClient } from "@prisma/client";
 import { defineEventHandler, readBody } from "h3";
@@ -96,5 +97,20 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       message: "Internal server error",
     });
+=======
+import { loginUser } from '~/server/services/auth/auth.service'
+import { createError } from 'h3'
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event)
+
+  if (!body?.correo || !body?.contrasena) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Datos incompletos'
+    })
+>>>>>>> origin/Rama_Esteban
   }
-});
+
+  return await loginUser(body.correo, body.contrasena)
+})

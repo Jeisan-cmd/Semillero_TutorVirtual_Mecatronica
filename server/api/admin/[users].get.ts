@@ -15,7 +15,6 @@ export default defineEventHandler(async (event: H3Event) => {
     OR: [
       { nombre: { contains: search.toLocaleLowerCase() } },
       { correo: { contains: search.toLocaleLowerCase() } },
-      { telefono: { contains: search.toLocaleLowerCase() } },
       { documentoIdentidad: { contains: search.toLocaleLowerCase() } },
     ],
   };
@@ -30,7 +29,6 @@ export default defineEventHandler(async (event: H3Event) => {
       documentoIdentidad: true, // Asegúrate de que este campo esté incluido
       nombre: true,
       correo: true,
-      telefono: true,
       rol: true,
       contrasena: true,
     },

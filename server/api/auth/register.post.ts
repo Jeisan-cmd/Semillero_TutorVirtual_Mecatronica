@@ -1,20 +1,11 @@
-// server/api/auth/register.post.ts
-import { PrismaClient, Rol } from "@prisma/client";
-import bcrypt from "bcryptjs";
-import { defineEventHandler, readBody, createError } from "h3";
+import { PrismaClient, Rol } from "@prisma/client"
+import { readBody, createError } from "h3"
+import bcrypt from "bcrypt"
 
-const prisma = new PrismaClient();
-
-interface RegisterBody {
-  email: string;
-  password: string;
-  role: Rol;
-  documentoIdentidad: string;
-  nombre: string;
-  telefono?: string;
-}
+const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
+<<<<<<< HEAD
   const body: RegisterBody = await readBody(event);
   const {
     email,
@@ -41,51 +32,66 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+=======
+>>>>>>> origin/Rama_Esteban
   try {
-    // Verificar si el usuario ya existe
-    const existingUser = await prisma.usuario.findFirst({
-      where: {
-        OR: [{ correo: email }, { documentoIdentidad: documentoIdentidad }],
-      },
-    });
+    const body = await readBody(event)
 
-    if (existingUser) {
-      return createError({
+    const {
+      documentoIdentidad,
+      nombre,
+      correo,
+      contrasena,
+      rol,
+    } = body
+
+    // 🔒 Validaciones mínimas
+    if (!documentoIdentidad || !nombre || !correo || !contrasena) {
+      throw createError({
         statusCode: 400,
-        message:
-          "Ya existe un usuario con este correo o documento de identidad.",
-      });
+        statusMessage: "Datos incompletos",
+      })
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 🔁 Verificar correo único
+    const existe = await prisma.usuario.findUnique({
+      where: { correo },
+    })
 
-    const user = await prisma.usuario.create({
+    if (existe) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "El usuario ya existe",
+      })
+    }
+
+    const hash = await bcrypt.hash(contrasena, 10)
+
+    const usuario = await prisma.usuario.create({
       data: {
-        correo: email,
-        contrasena: hashedPassword,
-        rol: role,
         documentoIdentidad,
         nombre,
-        telefono,
+        correo,
+        contrasena: hash,
+        rol: rol ?? Rol.ESTUDIANTE, // 👈 DEFAULT SEGURO
       },
-    });
+    })
 
-    return { message: "Usuario registrado exitosamente", userId: user.id };
-  } catch (error: unknown) {
-    console.error("Error de registro:", error);
-
-    if (error instanceof Error) {
-      return createError({
-        statusCode: 500,
-        message: `Error interno del servidor: ${error.message}`,
-      });
-    } else {
-      return createError({
-        statusCode: 500,
-        message: "Error interno del servidor: Ocurrió un error desconocido.",
-      });
+    return {
+      ok: true,
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        correo: usuario.correo,
+        rol: usuario.rol,
+      },
     }
-  } finally {
-    await prisma.$disconnect();
+  } catch (error) {
+    console.error("❌ ERROR REGISTER:", error)
+
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Error al registrar",
+    })
   }
-});
+})
