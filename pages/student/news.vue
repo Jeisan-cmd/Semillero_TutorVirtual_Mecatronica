@@ -1,65 +1,73 @@
 <template>
-  <!-- Carrusel de Progreso y Bienvenida -->
-  <TheCarousel />
+  <div class="p-6 space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Noticias y Tendencias</h1>
+    </div>
 
-  <!-- Estado de Error -->
-  <div v-if="error" class="bg-red-500 text-white p-4 rounded-lg mb-8">
-    {{ error }}
-  </div>
+    <!-- Sección de Filtros -->
+    <div class="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
+      <div class="flex-1">
+        <label for="category-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filtrar por Categoría</label>
+        <select id="category-filter" v-model="selectedCategory" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+          <option value="Todas">Todas las Categorías</option>
+          <option v-for="category in uniqueCategories" :key="category" :value="category">
+            {{ category }}
+          </option>
+        </select>
+      </div>
+      <div class="flex-1">
+        <label for="date-filter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filtrar por Fecha</label>
+        <select id="date-filter" v-model="selectedDateFilter" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+          <option value="Todos">Todos los Tiempos</option>
+          <option value="lastWeek">Última Semana</option>
+          <option value="lastMonth">Último Mes</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button @click="resetFilters" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+          Limpiar Filtros
+        </button>
+      </div>
+    </div>
 
-  <!-- Estado de Carga -->
-  <div v-if="loading" class="flex justify-center items-center h-64">
-    <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-  </div>
-
-
-  <!-- Noticias -->
-  <section>
-   <!-- Título y enlace - siempre visibles -->
-    <div class="flex items-center justify-between mb-6">
-     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Noticias y Tendencias</h2>
-     <NuxtLink
-        to="/student/news"
-        class="flex items-center gap-2 text-indigo-600 font-medium hover:underline"
-     >
-        Ver más
-       <Icon name="heroicons:arrow-right" class="w-4 h-4" />
-     </NuxtLink>
-   </div>
+    <!-- Estado de Error -->
+    <div v-if="error" class="bg-red-500 text-white p-4 rounded-lg">
+      {{ error }}
+    </div>
 
     <!-- Estado de Carga -->
     <div v-if="loading" class="flex justify-center items-center h-64">
-     <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
-   </div>
+      <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
 
-   <!-- Cuadrícula -->
-    <div v-else-if="articles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div v-for="article in articles.slice(0, 3)" :key="article.id"
-       class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 ease-in-out transform hover:scale-105">
+    <!-- Cuadrícula de Noticias -->
+    <div v-else-if="filteredArticles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div v-for="article in filteredArticles" :key="article.id"
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 ease-in-out transform hover:scale-105">
         <div class="relative">
           <a :href="article.url" target="_blank" rel="noopener noreferrer">
             <img :src="article.image" :alt="article.title" class="w-full h-56 object-cover cursor-pointer"
               @error="handleImageError">
-         </a>
-         <div class="absolute top-0 right-0 m-4">
-           <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
+          </a>
+          <div class="absolute top-0 right-0 m-4">
+            <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm">
               {{ article.category }}
-           </span>
+            </span>
           </div>
         </div>
-       <div class="p-6">
+        <div class="p-6">
           <h2 class="text-xl font-semibold mb-3 text-zinc-900 dark:text-white">
-           {{ article.title }}
-         </h2>
-         <p class="text-zinc-600 dark:text-gray-300 mb-4 text-base leading-relaxed">
-           {{ article.summary }}
-         </p>
+            {{ article.title }}
+          </h2>
+          <p class="text-zinc-600 dark:text-gray-300 mb-4 text-base leading-relaxed">
+            {{ article.summary }}
+          </p>
           <div class="flex justify-between items-center">
-           <span class="text-sm text-zinc-500 dark:text-gray-400">
+            <span class="text-sm text-zinc-500 dark:text-gray-400">
               {{ formatDate(article.date) }}
             </span>
             <button @click="showArticleDetails(article)"
-             class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300 ease-in-out flex items-center space-x-2">
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300 ease-in-out flex items-center space-x-2">
               <span>Más información</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
@@ -72,12 +80,12 @@
     </div>
 
     <!-- Estado Vacío -->
-   <div v-else class="text-center py-12">
-      <p class="text-zinc-600 dark:text-gray-300 text-xl">No hay noticias disponibles en este momento.</p>
-   </div>
-  </section>
+    <div v-else class="text-center py-12">
+      <p class="text-zinc-600 dark:text-gray-300 text-xl">No se encontraron noticias con los filtros seleccionados.</p>
+    </div>
 
-  <div v-if="selectedArticle"
+    <!-- Modal de Artículo -->
+    <div v-if="selectedArticle"
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-zinc-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-8">
@@ -164,25 +172,20 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted} from 'vue';
+import { ref, computed, onMounted } from 'vue';
+
+const selectedCategory = ref('Todas');
+const selectedDateFilter = ref('Todos');
+
 definePageMeta({
-  auth: false,      
-  middleware: [],    
-  layout: 'default' 
+  auth: false,
+  middleware: [],
+  layout: 'student'
 });
-
-const isSidebarOpen = ref(false);
-
-const toggleSidebar = () => {
-  isSidebarOpen.value = !isSidebarOpen.value;
-};
-
-const closeSidebar = () => {
-  isSidebarOpen.value = false;
-};
 
 interface Article {
   id: number;
@@ -197,7 +200,6 @@ interface Article {
   content?: string;
 }
 
-
 const articles = useState<Article[]>('articles', () => []);
 const selectedArticle = ref<Article | null>(null);
 const userMessage = ref('');
@@ -209,7 +211,38 @@ const loading = ref(true);
 const error = ref('');
 const lastUpdate = ref(new Date().toISOString());
 
-const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const uniqueCategories = computed(() => {
+  const categories = [...new Set(articles.value.map(article => article.category))];
+  return categories.sort();
+});
+
+const filteredArticles = computed(() => {
+  let filtered = articles.value;
+
+  // Filtrar por categoría
+  if (selectedCategory.value !== 'Todas') {
+    filtered = filtered.filter(article => article.category === selectedCategory.value);
+  }
+
+  // Filtrar por fecha
+  if (selectedDateFilter.value !== 'Todos') {
+    const now = new Date();
+    let filterDate = new Date();
+    if (selectedDateFilter.value === 'lastWeek') {
+      filterDate.setDate(now.getDate() - 7);
+    } else if (selectedDateFilter.value === 'lastMonth') {
+      filterDate.setMonth(now.getMonth() - 1);
+    }
+    filtered = filtered.filter(article => new Date(article.date) >= filterDate);
+  }
+
+  return filtered;
+});
+
+const resetFilters = () => {
+  selectedCategory.value = 'Todas';
+  selectedDateFilter.value = 'Todos';
+};
 
 onMounted(() => {
 
@@ -501,7 +534,7 @@ function closeGeminiResponse() {
 }
 </script>
 
-<style>
+<style scoped>
 .prose {
   max-width: none;
 }

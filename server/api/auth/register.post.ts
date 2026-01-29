@@ -34,12 +34,11 @@ export default defineEventHandler(async (event) => {
   }
 
   // Rechazar intentos de registro con rol "ESTUDIANTE"
-  if (role === "ESTUDIANTE") {
-    return createError({
-      statusCode: 400,
-      message: "No se permite el registro directo de estudiantes.",
-    });
-  }
+  //  return createError({
+  //    statusCode: 400,
+  //    message: "No se permite el registro directo de estudiantes.",
+  //  });
+  //}
 
   try {
     // Verificar si el usuario ya existe
