@@ -1,10 +1,5 @@
 import { defineEventHandler, readBody } from 'h3'
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-
-  return {
-    message: 'OK',
-    body
-  }
+export default defineEventHandler(() => {
+  return { mensaje: 'API OK' }
 })

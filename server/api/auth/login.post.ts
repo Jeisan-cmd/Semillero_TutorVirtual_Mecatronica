@@ -1,5 +1,5 @@
 import { loginUser } from '~/server/services/auth/auth.service'
-import { createError } from 'h3'
+import { createError, readBody } from 'h3'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)

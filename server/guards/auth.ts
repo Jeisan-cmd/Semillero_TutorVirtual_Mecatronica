@@ -1,17 +1,15 @@
-import { defineEventHandler, getHeader, createError } from 'h3'
+import { getHeader, createError, H3Event } from 'h3'
 import { verifyToken } from '~/server/utils/jwt'
 
-const PUBLIC_ROUTES = [
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/test'
-]
-
 export default defineEventHandler((event) => {
-  const path = event.path || ''
+  const path = event.path.trim() // 👈 CLAVE
 
-  // Permitir rutas públicas (robusto)
-  if (PUBLIC_ROUTES.some(route => path.startsWith(route))) {
+  const publicRoutes = [
+    '/api/auth/login',
+    '/api/auth/register'
+  ]
+
+  if (publicRoutes.includes(path)) {
     return
   }
 

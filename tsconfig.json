@@ -13,7 +13,11 @@
     "types": ["node", "bcrypt", "bcryptjs", "jsonwebtoken"],
     "typeRoots": [
       "./node_modules/@types"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"]
+    }
   }
   
 }
