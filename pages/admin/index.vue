@@ -183,6 +183,15 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  middleware: () => {
+    const token = useCookie('token')
+
+    if (!token.value) {
+      return navigateTo('/login')
+    }
+  }
+})
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRuntimeConfig } from '#app';

@@ -81,7 +81,7 @@ import { useAuth } from '~/composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { login, register, user } = useAuth()
+const { login, register } = useAuth()
 
 const email = ref('')
 const password = ref('')
@@ -96,30 +96,15 @@ const error = ref('')
 const successMessage = ref('')
 
 const handleSubmit = async () => {
-  error.value = ''
-  successMessage.value = ''
-
   try {
-    if (isRegistering.value) {
-      await register(
-        email.value,
-        password.value,
-        role.value,
-        documentoIdentidad.value,
-        nombre.value,
-        telefono.value
-      )
+    const loggedUser = await login(email.value, password.value)
 
-      successMessage.value = 'Registro exitoso. Inicia sesión.'
-      isRegistering.value = false
-    } else {
-      await login(email.value, password.value)
-      if (user.value) {
-        router.push(`/${user.value.role.toLowerCase()}`)
-      }
-    }
+    console.log('USUARIO LOGUEADO:', loggedUser)
+    console.log('ROL:', loggedUser.rol)
+
+    router.push(`/${loggedUser.rol.toLowerCase()}`)
   } catch (err: any) {
-    error.value = err.message || 'Error de autenticación'
+    error.value = err.message
   }
 }
 
@@ -129,6 +114,7 @@ const toggleRegisterLogin = () => {
   successMessage.value = ''
 }
 </script>
+
 
 <style scoped>
 .input {

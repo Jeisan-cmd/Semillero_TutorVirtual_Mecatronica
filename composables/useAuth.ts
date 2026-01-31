@@ -2,29 +2,40 @@ import { ref } from 'vue'
 
 interface User {
   id: number
-  email: string
-  role: string
+  correo: string
+  rol: string
 }
 
 export const useAuth = () => {
   const user = ref<User | null>(null)
-  const token = ref<string | null>(null)
 
-  const login = async (email: string, password: string) => {
+  // 🍪 cookie reactiva de Nuxt
+  const token = useCookie<string | null>('token')
+
+  // ✅ LOGIN — retorna el usuario
+  const login = async (email: string, password: string): Promise<User> => {
     try {
       const res = await $fetch<{
         token: string
         user: User
       }>('/api/auth/login', {
         method: 'POST',
-        body: { email, password }
+        body: {
+          correo: email,
+          contrasena: password
+        }
       })
 
+      // 🔥 GUARDAR EN COOKIE (CLAVE PARA EL MIDDLEWARE)
       token.value = res.token
       user.value = res.user
 
-      localStorage.setItem('token', res.token)
-      localStorage.setItem('user', JSON.stringify(res.user))
+      // opcional: mantener usuario en localStorage
+      if (process.client) {
+        localStorage.setItem('user', JSON.stringify(res.user))
+      }
+
+      return res.user
     } catch (err: any) {
       console.error('LOGIN ERROR RAW:', err)
 
@@ -40,6 +51,7 @@ export const useAuth = () => {
     }
   }
 
+  // ✅ REGISTER (no se toca)
   const register = async (
     email: string,
     password: string,
@@ -52,12 +64,11 @@ export const useAuth = () => {
       await $fetch('/api/auth/register', {
         method: 'POST',
         body: {
-          email,
-          password,
-          role,
+          correo: email,
+          contrasena: password,
+          rol: role,
           documentoIdentidad,
-          nombre,
-          telefono
+          nombre
         }
       })
     } catch (err: any) {
@@ -75,14 +86,11 @@ export const useAuth = () => {
     }
   }
 
-  // 🔥 Restaurar sesión al recargar
+  // 🔄 Restaurar usuario (NO token, el token vive en cookie)
   if (process.client) {
     const savedUser = localStorage.getItem('user')
-    const savedToken = localStorage.getItem('token')
-
-    if (savedUser && savedToken) {
+    if (savedUser) {
       user.value = JSON.parse(savedUser)
-      token.value = savedToken
     }
   }
 
