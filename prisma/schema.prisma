@@ -57,10 +57,14 @@ model Usuario {
  */
 model Material {
   id          Int      @id @default(autoincrement())
-  titulo      String
+  nombre      String
   descripcion String?
   tipo        String
   url         String
+  texto       String?    // Texto extraído para usar en el chat
+  inChat      Boolean @default(false)
+  idAsignatura Int?
+  moduloId    Int?
   creadoEn    DateTime @default(now())
 
   creadoPorId Int
@@ -145,4 +149,23 @@ model ChatSession {
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   modulo  Modulo  @relation(fields: [moduloId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, moduloId])
+}
+
+/**
+ * ===========================
+ * CONTEXTO DEL CHAT
+ * ===========================
+ * Mensajes intercambiados en el chat del tutor virtual
+ */
+model ChatContext {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int
+  moduloId      Int
+  mensajeUsuario String
+  mensajeIA     String?
+  createdAt     DateTime @default(now())
+
+  @@index([usuarioId, moduloId])
 }

@@ -12,5 +12,7 @@ export function requireAuth(event: any) {
   }
 
   const token = auth.replace('Bearer ', '')
-  event.context.user = verifyToken(token)
+  const payload = verifyToken(token)
+  event.context.user = payload
+  return payload
 }
